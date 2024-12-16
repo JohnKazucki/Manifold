@@ -42,7 +42,7 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
         region = context.region
         region3d = context.region_data
 
-        # self.bind_display_space_shader(scene)
+        self.bind_display_space_shader(scene)
 
         self.meshtriangle_shader.bind()
 
@@ -51,4 +51,4 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
 
         self.meshtriangle_shader.unbind()
 
-        # self.unbind_display_space_shader()
+        self.unbind_display_space_shader()
