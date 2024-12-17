@@ -36,7 +36,7 @@ class Mesh:
 
         eval_obj.to_mesh_clear()
         
-    def rebuild_buffers(self, shader: BaseShader):
+    def rebuild_batch_buffers(self, shader: BaseShader):
         self.Batch = batch_for_shader(shader.program, 'TRIS', {"pos": self.vertices}, indices=self.indices)
 
     def draw(self, shader: BaseShader):

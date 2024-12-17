@@ -59,6 +59,10 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
         region = context.region
         region3d = context.region_data
 
+        gpu.state.depth_test_set('LESS_EQUAL')
+        gpu.state.depth_mask_set(True)
+
+
         self.bind_display_space_shader(scene)
 
         shader = self.meshtriangle_shader
@@ -71,9 +75,12 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
         mvp = region3d.window_matrix @ mv
   
         shader.set_mat4('ModelViewProjectionMatrix', mvp.transposed())
-        # shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
+        shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
 
         self.mesh.draw(shader)
+
+        gpu.state.depth_mask_set(False)
+
         shader.unbind()
 
         self.unbind_display_space_shader()
