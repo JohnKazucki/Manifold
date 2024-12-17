@@ -21,6 +21,26 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
     def __del__(self):
         pass
 
+
+    def view_update(self, context, depsgraph):
+        scene = depsgraph.scene
+
+        for obj in scene.objects:
+            if not obj.visible_get():
+                continue
+
+            if obj.type in ('MESH', 'CURVE'):
+                if obj.display_type in ('SOLID', 'TEXTURED'):
+                    self.update_mesh(obj, depsgraph)        
+
+
+    def update_mesh(self, obj, depsgraph):
+        evaluated_obj = obj.evaluated_get(depsgraph)
+
+        self.mesh.update(obj)
+        self.mesh.rebuild(evaluated_obj)
+
+
     def render(self, depsgraph):
         # Lazily import GPU module, since GPU context is only created on demand
         # for rendering and does not exist on register.
@@ -29,9 +49,6 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
         # Perform rendering task.
         pass
 
-
-    def view_update(self, context, depsgraph):
-        pass
 
     def view_draw(self, context, depsgraph):
         # Lazily import GPU module, so that the render engine works in
@@ -44,11 +61,19 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
 
         self.bind_display_space_shader(scene)
 
-        self.meshtriangle_shader.bind()
+        shader = self.meshtriangle_shader
 
-        self.mesh.rebuild(None)
-        self.mesh.draw(self.meshtriangle_shader)
+        shader.bind()
 
-        self.meshtriangle_shader.unbind()
+        self.mesh.rebuild_batch_buffers(shader)
+
+        mv = region3d.view_matrix @ self.mesh.matrix_world
+        mvp = region3d.window_matrix @ mv
+  
+        shader.set_mat4('ModelViewProjectionMatrix', mvp.transposed())
+        # shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
+
+        self.mesh.draw(shader)
+        shader.unbind()
 
         self.unbind_display_space_shader()

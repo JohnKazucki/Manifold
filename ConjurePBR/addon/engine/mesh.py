@@ -1,6 +1,9 @@
 import gpu
+from gpu_extras.batch import batch_for_shader
 
 from .shaders.base_shader import BaseShader
+
+import numpy as np
 
 
 
@@ -15,29 +18,26 @@ class Mesh:
         self.is_dirty = False
         self.indices_size = 0
 
+
+    def update(self, obj):
+        self.matrix_world = obj.matrix_world
+
+
     def rebuild(self, eval_obj):
-        # mesh = eval_obj.to_mesh()
+        mesh = eval_obj.to_mesh()
 
-        # self.indices = []        
+        self.indices = [0] * 3 * len(mesh.loop_triangles)
+        mesh.loop_triangles.foreach_get("vertices", self.indices)
+        self.indices = np.reshape(self.indices, (-1, 3)).tolist()
 
-        # self.vertices = [0]*len(mesh.vertices)
+        self.vertices = [0] * 3 * len(mesh.vertices)
+        mesh.vertices.foreach_get("co", self.vertices)
+        self.vertices = np.reshape(self.vertices, (-1, 3)).tolist()
 
-        self.vertices = [(-0.5,-0.2,0), (0.5,-0.2,0), (0,0.8,0)]
-        self.indices = [(0, 1, 2)]
-
+        eval_obj.to_mesh_clear()
         
-    def rebuild_buffers(self):
-        fmt = gpu.types.GPUVertFormat()
-        fmt.attr_add(id="pos", comp_type='F32', len=3, fetch_mode='FLOAT')
-        fmt.attr_add(id="normal", comp_type='F32', len=3, fetch_mode='FLOAT')
-
-        self.VBO = gpu.types.GPUVertBuf(len=len(self.vertices), format=fmt)
-        self.VBO.attr_fill(id="pos", data=self.vertices)
-
-        self.IBO = gpu.types.GPUIndexBuf(type='TRIS', seq=self.indices)
-
-        self.Batch = gpu.types.GPUBatch(type='TRIS', buf=self.VBO, elem=self.IBO)
+    def rebuild_buffers(self, shader: BaseShader):
+        self.Batch = batch_for_shader(shader.program, 'TRIS', {"pos": self.vertices}, indices=self.indices)
 
     def draw(self, shader: BaseShader):
-        self.rebuild_buffers()
         self.Batch.draw(shader.program)

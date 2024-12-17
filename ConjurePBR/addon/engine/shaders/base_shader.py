@@ -1,5 +1,8 @@
 import gpu
 
+import numpy as np
+
+
 class BaseShader:
 
     def __init__(self):
@@ -7,17 +10,14 @@ class BaseShader:
         self.needs_recompile = True
 
         self.vs_src = """
-in vec3 pos;
-
 void main()
 {
-    gl_Position = vec4(pos, 1.0);
+    gl_Position = ModelViewProjectionMatrix * vec4(pos, 1.0);
+    gl_Position.z = gl_Position.z - 0.000001 * gl_Position.w;
 }
 """
 
         self.fs_src = """
-out vec4 FragColor;
-
 void main()
 {
     FragColor = vec4(0.5, 1.0, 0.1, 1.0);
@@ -31,11 +31,23 @@ void main()
         
 
     def compile_program(self):
+        shader_info = gpu.types.GPUShaderCreateInfo()
 
-        program = gpu.types.GPUShader(self.vs_src, self.fs_src)
+        shader_info.vertex_source(self.vs_src)
+        shader_info.fragment_source(self.fs_src)
+
+        shader_info.push_constant('MAT4', "ModelViewProjectionMatrix")
+        # shader_info.push_constant('MAT4', "ModelMatrix")
+        shader_info.vertex_in(0, 'VEC3', "pos")
+        shader_info.fragment_out(0, 'VEC4', "FragColor")
+
+        program = gpu.shader.create_from_info(shader_info)
 
         return program
-
+    
+    def set_mat4(self, name, matrix):
+        matrix_list = np.reshape(matrix, (16, ))
+        self.program.uniform_float(name, matrix_list)
 
     def bind(self) -> bool:
         if self.needs_recompile:
