@@ -3,8 +3,6 @@ import gpu
 from ..base_shader import BaseShader
 
 import os.path
-
-# TODO : why does from ConjurePBR.get_path import get_path not work??
 from .....get_path import get_path
 
 
@@ -43,11 +41,13 @@ class MeshTriangleShader(BaseShader):
 
         shader_info.push_constant('MAT4', "ModelViewProjectionMatrix")
         shader_info.push_constant('MAT4', "ModelMatrix")
-        shader_info.vertex_in(0, 'VEC3', "pos")
+        shader_info.vertex_in(0, 'VEC3', "Position")
+        shader_info.vertex_in(1, 'VEC3', "Normal")
         shader_info.fragment_out(0, 'VEC4', "FragColor")
 
         vert_out = gpu.types.GPUStageInterfaceInfo("VS_OUT")
         vert_out.smooth('VEC3', "positionWS")
+        vert_out.smooth('VEC3', "normalWS")
 
         shader_info.vertex_out(vert_out)
 

@@ -1,7 +1,9 @@
 void main()
 {
-    positionWS = (ModelMatrix * vec4(pos, 1.0)).xyz;
+    positionWS = (ModelMatrix * vec4(Position, 1.0)).xyz;
 
-    gl_Position = ModelViewProjectionMatrix * vec4(pos, 1.0);
+    gl_Position = ModelViewProjectionMatrix * vec4(Position, 1.0);
     gl_Position.z = gl_Position.z - 0.000001 * gl_Position.w;
+
+    normalWS = (ModelMatrix * vec4(Normal, 0)).xyz;
 }

@@ -26,6 +26,9 @@ class Mesh:
     def rebuild(self, eval_obj):
         mesh = eval_obj.to_mesh()
 
+        mesh.split_faces()
+        mesh.calc_loop_triangles()
+
         self.indices = [0] * 3 * len(mesh.loop_triangles)
         mesh.loop_triangles.foreach_get("vertices", self.indices)
         self.indices = np.reshape(self.indices, (-1, 3)).tolist()
@@ -34,10 +37,14 @@ class Mesh:
         mesh.vertices.foreach_get("co", self.vertices)
         self.vertices = np.reshape(self.vertices, (-1, 3)).tolist()
 
+        self.normals = [0] * 3 * len(mesh.vertices)
+        mesh.vertices.foreach_get("normal", self.normals)
+        self.normals = np.reshape(self.normals, (-1, 3)).tolist()
+
         eval_obj.to_mesh_clear()
         
     def rebuild_batch_buffers(self, shader: BaseShader):
-        self.Batch = batch_for_shader(shader.program, 'TRIS', {"pos": self.vertices}, indices=self.indices)
+        self.Batch = batch_for_shader(shader.program, 'TRIS', {"Position": self.vertices, "Normal": self.normals}, indices=self.indices)
 
     def draw(self, shader: BaseShader):
         self.Batch.draw(shader.program)
