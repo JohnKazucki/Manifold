@@ -1,7 +1,7 @@
 import bpy
 
 from .mesh import Mesh
-from .shaders.base_shader import BaseShader
+from .shaders.meshtriangle.shader import MeshTriangleShader
 
 
 class ConjurePBRRenderEngine(bpy.types.RenderEngine):
@@ -16,7 +16,7 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
 
     def __init__(self):
         self.mesh = Mesh("test")
-        self.meshtriangle_shader = BaseShader()
+        self.meshtriangle_shader = MeshTriangleShader()
 
     def __del__(self):
         pass
