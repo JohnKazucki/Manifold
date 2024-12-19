@@ -17,6 +17,7 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
     def __init__(self):
         self.mesh = Mesh("test")
         self.meshtriangle_shader = MeshTriangleShader()
+        self.light = None
 
     def __del__(self):
         pass
@@ -32,6 +33,8 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
             if obj.type in ('MESH', 'CURVE'):
                 if obj.display_type in ('SOLID', 'TEXTURED'):
                     self.update_mesh(obj, depsgraph)        
+            elif obj.type == 'LIGHT':
+                self.update_light(obj)
 
 
     def update_mesh(self, obj, depsgraph):
@@ -39,6 +42,9 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
 
         self.mesh.update(obj)
         self.mesh.rebuild(evaluated_obj)
+
+    def update_light(self, obj):
+        self.light = obj
 
 
     def render(self, depsgraph):
@@ -76,6 +82,9 @@ class ConjurePBRRenderEngine(bpy.types.RenderEngine):
   
         shader.set_mat4('ModelViewProjectionMatrix', mvp.transposed())
         shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
+
+        shader.set_vec3('viewPos', region3d.view_matrix.inverted().translation)
+        shader.set_vec3('lightPos', self.light.location)
 
         self.mesh.draw(shader)
 

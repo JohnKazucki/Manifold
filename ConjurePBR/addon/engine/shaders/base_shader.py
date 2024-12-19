@@ -15,6 +15,9 @@ class BaseShader:
         
     def compile_program(self):
         pass
+
+    def set_vec3(self, name, vector):
+        self.program.uniform_float(name, vector[:])
     
     def set_mat4(self, name, matrix):
         matrix_list = np.reshape(matrix, (16, ))
