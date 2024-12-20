@@ -1,2 +1,2 @@
-# ConjurePBR
- PBR rendering engine for Blender 4.2
+# Manifold
+ rendering engine for Blender 4.2

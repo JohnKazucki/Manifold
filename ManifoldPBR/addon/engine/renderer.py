@@ -4,9 +4,9 @@ from .mesh import Mesh
 from .shaders.meshtriangle.shader import MeshTriangleShader
 
 
-class ConjurePBRRenderEngine(bpy.types.RenderEngine):
-    bl_idname = "CONJUREPBR"
-    bl_label = "Conjure PBR"
+class ManifoldRenderEngine(bpy.types.RenderEngine):
+    bl_idname = "MANIFOLD"
+    bl_label = "Manifold"
 
     # Request a GPU context to be created and activated for the render method.
     # This may be used either to perform the rendering itself, or to allocate

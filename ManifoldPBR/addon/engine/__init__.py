@@ -1,10 +1,10 @@
 import bpy
 
-from .renderer import ConjurePBRRenderEngine
+from .renderer import ManifoldRenderEngine
 
 
 classes = (
-    ConjurePBRRenderEngine,
+    ManifoldRenderEngine,
 )
 
 
@@ -29,7 +29,7 @@ def register_render_engines():
         register_class(cls)
 
     for panel in get_panels():
-        panel.COMPAT_ENGINES.add('CONJUREPBR')
+        panel.COMPAT_ENGINES.add('MANIFOLD')
 
 
 def unregister_render_engines():
@@ -38,5 +38,5 @@ def unregister_render_engines():
         unregister_class(cls)
 
     for panel in get_panels():
-        if 'CONJUREPBR' in panel.COMPAT_ENGINES:
-            panel.COMPAT_ENGINES.remove('CONJUREPBR')
+        if 'MANIFOLD' in panel.COMPAT_ENGINES:
+            panel.COMPAT_ENGINES.remove('MANIFOLD')
