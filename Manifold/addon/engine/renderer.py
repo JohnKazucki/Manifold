@@ -1,13 +1,12 @@
 import bpy
+from mathutils import Matrix
 
 from .mesh import Mesh
 from .shaders.meshtriangle.shader import MeshTriangleShader
 
 import numpy as np
 
-from gpu_extras.presets import draw_circle_2d
-import random
-from mathutils import Matrix, Vector
+
 
 class ManifoldRenderEngine(bpy.types.RenderEngine):
     bl_idname = "MANIFOLD"
