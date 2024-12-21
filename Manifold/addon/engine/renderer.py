@@ -66,23 +66,24 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
             return modelview_matrix, window_matrix      
 
+        ctx = bpy.context
+        scene = depsgraph.scene
+        
+        scale = scene.render.resolution_percentage / 100.0
+        self.size_x = int(scene.render.resolution_x * scale)
+        self.size_y = int(scene.render.resolution_y * scale)
 
         # Lazily import GPU module, since GPU context is only created on demand
         # for rendering and does not exist on register.
         import gpu
 
         IMAGE_NAME = "Manifold_Render_Output"
-        WIDTH = 1920
-        HEIGHT = 1080
-
-        ctx = bpy.context
-        scene = depsgraph.scene
 
         depsgraph.update()
         self.view_update(ctx, depsgraph)
 
         # Perform rendering task.
-        offscreen = gpu.types.GPUOffScreen(WIDTH, HEIGHT)
+        offscreen = gpu.types.GPUOffScreen(self.size_x, self.size_y)
 
         with offscreen.bind():
             fb = gpu.state.active_framebuffer_get()
@@ -101,7 +102,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
                 self.mesh.rebuild_batch_buffers(shader)
 
                 camera = bpy.data.objects['Camera']
-                mv, mw = get_camera_matrices(camera, depsgraph, WIDTH, HEIGHT)
+                mv, mw = get_camera_matrices(camera, depsgraph, self.size_x, self.size_y)
                 mvp = mw @ mv
 
                 shader.set_mat4('ModelViewProjectionMatrix', mvp.transposed())
@@ -117,14 +118,14 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
                 gpu.state.depth_mask_set(False)
                 shader.unbind()
 
-            buffer = fb.read_color(0,0, WIDTH, HEIGHT, 4, 0, 'FLOAT')
+            buffer = fb.read_color(0,0, self.size_x, self.size_y, 4, 0, 'FLOAT')
 
         offscreen.free()
 
         # if IMAGE_NAME not in bpy.data.images:
-        #     bpy.data.images.new(IMAGE_NAME, WIDTH, HEIGHT)
+        #     bpy.data.images.new(IMAGE_NAME, self.size_x, self.size_y)
         # image = bpy.data.images[IMAGE_NAME]
-        # image.scale(WIDTH, HEIGHT)
+        # image.scale(self.size_x, self.size_y)
 
         buffer_list = []
 
@@ -140,7 +141,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         # when rendering to a separate image texture you DO have to do this. but NOT when rendering directly into a pass        
         # image.pixels = [linearrgb_to_srgb(v) for v in buffer_list]
 
-        result = self.begin_result(0, 0, WIDTH, HEIGHT)
+        result = self.begin_result(0, 0, self.size_x, self.size_y)
         layer = result.layers[0].passes["Combined"]
         layer.rect = np.reshape(buffer_list, (-1, 4))
         self.end_result(result)
