@@ -88,7 +88,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         with offscreen.bind():
             fb = gpu.state.active_framebuffer_get()
-            fb.clear(color=(0.0, 0.0, 0.0, 0.0), depth=1.0)
+            self.draw_background(fb, scene)
             with gpu.matrix.push_pop():
                 # reset matrices -> use normalized device coordinates [-1, 1]
                 gpu.matrix.load_matrix(Matrix.Identity(4))
@@ -138,7 +138,22 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         mvp = region3d.window_matrix @ mv
         camera_location = region3d.view_matrix.inverted().translation
 
+        fb = gpu.state.active_framebuffer_get()
+        self.draw_background(fb, scene)
         self.draw_meshes(scene, mvp, camera_location, is_viewport=True)
+
+
+    def get_background_color(self, scene):
+        world = scene.world
+
+        if world:
+            return world.color
+        else:
+            return (0.0, 0.0, 0.0, 0.0)
+
+    def draw_background(self, fb, scene):
+        background_color = self.get_background_color(scene)
+        fb.clear(color=background_color, depth=1.0)
 
 
     def draw_meshes(self, scene, modelviewprojection_matrix, camera_location, is_viewport=False):
@@ -154,14 +169,20 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         shader.bind()
         self.mesh.rebuild_batch_buffers(shader)
 
+        shader.set_vec3('viewPos', camera_location)
+
         shader.set_mat4('ModelViewProjectionMatrix', modelviewprojection_matrix.transposed())
         shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
 
-        shader.set_vec3('viewPos', camera_location)
+        shader.set_vec3('surfaceColor', self.mesh.material.diffuse_color[:3])
+        shader.set_float('surfaceRoughness', self.mesh.material.roughness)
 
         shader.set_vec3('lightPos', self.light.location)
         shader.set_float('lightEnergy', self.light.data.energy/10)
         shader.set_float('lightColor', self.light.data.color)
+
+        background_color = self.get_background_color(scene)
+        shader.set_vec3('ambientColor', background_color[:3])
 
 
         self.mesh.draw(shader)

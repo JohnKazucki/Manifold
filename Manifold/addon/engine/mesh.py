@@ -21,7 +21,7 @@ class Mesh:
 
     def update(self, obj):
         self.matrix_world = obj.matrix_world
-
+        self.material = obj.material_slots[0].material
 
     def rebuild(self, eval_obj):
         mesh = eval_obj.to_mesh()

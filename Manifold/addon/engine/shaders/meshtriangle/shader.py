@@ -39,14 +39,19 @@ class MeshTriangleShader(BaseShader):
         shader_info.vertex_source(self.vs_src)
         shader_info.fragment_source(self.fs_src)
 
+        shader_info.push_constant('VEC3', "viewPos")
+
         shader_info.push_constant('MAT4', "ModelViewProjectionMatrix")
         shader_info.push_constant('MAT4', "ModelMatrix")
 
-        shader_info.push_constant('VEC3', "viewPos")
+        shader_info.push_constant('VEC3', "surfaceColor")
+        shader_info.push_constant('FLOAT', "surfaceRoughness")
 
         shader_info.push_constant('VEC3', "lightPos")
         shader_info.push_constant('FLOAT', "lightEnergy")
         shader_info.push_constant('VEC3', "lightColor")
+
+        shader_info.push_constant('VEC3', "ambientColor")
         
         shader_info.vertex_in(0, 'VEC3', "Position")
         shader_info.vertex_in(1, 'VEC3', "Normal")

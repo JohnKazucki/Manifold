@@ -23,18 +23,22 @@ float specular_light(vec3 positionWS, vec3 normalWS, vec3 lightPosition, vec3 ey
 
 void main()
 {
-    vec3 surface_col = vec3(.4, .7, .5);
-    vec3 ambient_col = vec3(0.2, 0.2, 0.3);
     float ambient_strength = .7;
-    vec3 ambient = ambient_col * ambient_strength;
+    vec3 ambient = ambientColor * ambient_strength;
 
     float diff = diffuse_light(positionWS, normalWS, lightPos);
     vec3 diffuse = diff*lightColor*lightEnergy;
 
-    float spec = specular_light(positionWS, normalWS, lightPos, viewPos, 64);
-    float specularStrength = lightEnergy;
-    vec3 specular = specularStrength * spec*lightColor;
+    float specCurve = 10;
+    float specularity = 1.0-surfaceRoughness;
+    // from https://math.stackexchange.com/questions/297768/how-would-i-create-a-exponential-ramp-function-from-0-0-to-1-1-with-a-single-val
+    float specExponent = (exp(specCurve*specularity)-1.0)/(exp(specCurve)-1.0)*512;
+    specExponent += 0.0001;
+
+    float spec = specular_light(positionWS, normalWS, lightPos, viewPos, specExponent);
+    float specularStrength = lightEnergy*(specExponent/128);
+    vec3 specular = specularStrength*spec * lightColor;
     
-    vec3 color = (ambient+diffuse+specular)*surface_col;
+    vec3 color = (ambient+diffuse+specular)*surfaceColor;
     FragColor = vec4(color, 1.0);
 }
