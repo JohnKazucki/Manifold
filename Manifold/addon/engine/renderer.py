@@ -143,7 +143,8 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         result = self.begin_result(0, 0, self.size_x, self.size_y)
         layer = result.layers[0].passes["Combined"]
-        layer.rect = np.reshape(buffer_list, (-1, 4))
+        # layer.rect = np.reshape(buffer_list, (-1, 4))
+        layer.rect.foreach_set(np.array(buffer_list, np.float32))
         self.end_result(result)
 
 
