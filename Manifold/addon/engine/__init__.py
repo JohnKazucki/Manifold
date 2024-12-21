@@ -12,6 +12,9 @@ def get_panels():
     exclude_panels = {
         'VIEWLAYER_PT_filter',
         'VIEWLAYER_PT_layer_passes',
+        'RENDER_PT_freestyle',
+        'RENDER_PT_simplify',
+        'RENDER_PT_gpencil',
     }
 
     panels = []
