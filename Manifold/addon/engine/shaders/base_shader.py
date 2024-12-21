@@ -16,6 +16,9 @@ class BaseShader:
     def compile_program(self):
         pass
 
+    def set_float(self, name, value):
+        self.program.uniform_float(name, value)
+
     def set_vec3(self, name, vector):
         self.program.uniform_float(name, vector[:])
     

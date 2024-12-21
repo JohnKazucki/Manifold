@@ -158,7 +158,11 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
 
         shader.set_vec3('viewPos', camera_location)
+
         shader.set_vec3('lightPos', self.light.location)
+        shader.set_float('lightEnergy', self.light.data.energy/10)
+        shader.set_float('lightColor', self.light.data.color)
+
 
         self.mesh.draw(shader)
         

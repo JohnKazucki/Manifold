@@ -43,7 +43,10 @@ class MeshTriangleShader(BaseShader):
         shader_info.push_constant('MAT4', "ModelMatrix")
 
         shader_info.push_constant('VEC3', "viewPos")
+
         shader_info.push_constant('VEC3', "lightPos")
+        shader_info.push_constant('FLOAT', "lightEnergy")
+        shader_info.push_constant('VEC3', "lightColor")
         
         shader_info.vertex_in(0, 'VEC3', "Position")
         shader_info.vertex_in(1, 'VEC3', "Normal")
