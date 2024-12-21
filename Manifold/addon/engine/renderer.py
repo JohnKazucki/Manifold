@@ -53,6 +53,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
 
     def render(self, depsgraph):
+        # This is F12 render
 
         def get_camera_matrices(camera, depsgraph, resolution_x, resolution_y):
             modelview_matrix = camera.matrix_world.inverted()
@@ -63,7 +64,6 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
                 scale_x = 1,
                 scale_y = 1,
             )     
-
             return modelview_matrix, window_matrix      
 
         ctx = bpy.context
@@ -73,11 +73,13 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         self.size_x = int(scene.render.resolution_x * scale)
         self.size_y = int(scene.render.resolution_y * scale)
 
+        camera = scene.camera
+        mv, mw = get_camera_matrices(camera, depsgraph, self.size_x, self.size_y)
+        mvp = mw @ mv
+
         # Lazily import GPU module, since GPU context is only created on demand
         # for rendering and does not exist on register.
         import gpu
-
-        IMAGE_NAME = "Manifold_Render_Output"
 
         depsgraph.update()
         self.view_update(ctx, depsgraph)
@@ -89,62 +91,38 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
             fb = gpu.state.active_framebuffer_get()
             fb.clear(color=(0.0, 0.0, 0.0, 0.0), depth=1.0)
             with gpu.matrix.push_pop():
-            # reset matrices -> use normalized device coordinates [-1, 1]
+                # reset matrices -> use normalized device coordinates [-1, 1]
                 gpu.matrix.load_matrix(Matrix.Identity(4))
                 gpu.matrix.load_projection_matrix(Matrix.Identity(4))
 
-                gpu.state.depth_test_set('LESS_EQUAL')
-                gpu.state.depth_mask_set(True)
-
-                shader = self.meshtriangle_shader
-                shader.bind()
-
-                self.mesh.rebuild_batch_buffers(shader)
-
-                camera = bpy.data.objects['Camera']
-                mv, mw = get_camera_matrices(camera, depsgraph, self.size_x, self.size_y)
-                mvp = mw @ mv
-
-                shader.set_mat4('ModelViewProjectionMatrix', mvp.transposed())
-                shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
-
-                camera_loc = camera.location
-
-                shader.set_vec3('viewPos',  camera_loc)
-                shader.set_vec3('lightPos', self.light.location)
-
-                self.mesh.draw(shader)
-
-                gpu.state.depth_mask_set(False)
-                shader.unbind()
+                self.draw_meshes(scene, mvp, camera.location, is_viewport=False)
 
             buffer = fb.read_color(0,0, self.size_x, self.size_y, 4, 0, 'FLOAT')
 
         offscreen.free()
 
-        # if IMAGE_NAME not in bpy.data.images:
-        #     bpy.data.images.new(IMAGE_NAME, self.size_x, self.size_y)
-        # image = bpy.data.images[IMAGE_NAME]
-        # image.scale(self.size_x, self.size_y)
-
         buffer_list = []
-
         for line in buffer:
             line_list = line.to_list()
             buffer_list += line_list
 
         buffer_list = np.reshape(buffer_list, (1, -1))[0]
 
-        GAMMA = 1.0 / 2.4
-        linearrgb_to_srgb = lambda c: (c * 12.92 if c > 0.0 else 0.0) if c < 0.0031306684425 else 1.055 * c**GAMMA - 0.055
-
-        # when rendering to a separate image texture you DO have to do this. but NOT when rendering directly into a pass        
-        # image.pixels = [linearrgb_to_srgb(v) for v in buffer_list]
-
         result = self.begin_result(0, 0, self.size_x, self.size_y)
         layer = result.layers[0].passes["Combined"]
         layer.rect.foreach_set(np.array(buffer_list, np.float32))
         self.end_result(result)
+
+        # when rendering to a separate image texture you have to do this. but NOT when rendering directly into a render layer
+        # IMAGE_NAME = "Manifold_Image_Output"
+        # if IMAGE_NAME not in bpy.data.images:
+        #     bpy.data.images.new(IMAGE_NAME, self.size_x, self.size_y)
+        # image = bpy.data.images[IMAGE_NAME]
+        # image.scale(self.size_x, self.size_y)
+        
+        # GAMMA = 1.0 / 2.4
+        # linearrgb_to_srgb = lambda c: (c * 12.92 if c > 0.0 else 0.0) if c < 0.0031306684425 else 1.055 * c**GAMMA - 0.055
+        # image.pixels = [linearrgb_to_srgb(v) for v in buffer_list]
 
 
 
@@ -157,31 +135,36 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         region = context.region
         region3d = context.region_data
 
+        mv = region3d.view_matrix @ self.mesh.matrix_world
+        mvp = region3d.window_matrix @ mv
+        camera_location = region3d.view_matrix.inverted().translation
+
+        self.draw_meshes(scene, mvp, camera_location, is_viewport=True)
+
+
+    def draw_meshes(self, scene, modelviewprojection_matrix, camera_location, is_viewport=False):
+        import gpu
+
         gpu.state.depth_test_set('LESS_EQUAL')
         gpu.state.depth_mask_set(True)
 
-
-        self.bind_display_space_shader(scene)
+        if is_viewport:
+            self.bind_display_space_shader(scene)
 
         shader = self.meshtriangle_shader
-
         shader.bind()
-
         self.mesh.rebuild_batch_buffers(shader)
 
-        mv = region3d.view_matrix @ self.mesh.matrix_world
-        mvp = region3d.window_matrix @ mv
-
-        shader.set_mat4('ModelViewProjectionMatrix', mvp.transposed())
+        shader.set_mat4('ModelViewProjectionMatrix', modelviewprojection_matrix.transposed())
         shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
 
-        shader.set_vec3('viewPos', region3d.view_matrix.inverted().translation)
+        shader.set_vec3('viewPos', camera_location)
         shader.set_vec3('lightPos', self.light.location)
 
         self.mesh.draw(shader)
-
+        
         gpu.state.depth_mask_set(False)
-
         shader.unbind()
 
-        self.unbind_display_space_shader()
+        if is_viewport:
+            self.unbind_display_space_shader()
