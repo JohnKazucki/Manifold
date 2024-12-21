@@ -56,7 +56,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         def get_camera_matrices(camera, depsgraph, resolution_x, resolution_y):
             modelview_matrix = camera.matrix_world.inverted()
-            projection_matrix = camera.calc_matrix_camera(
+            window_matrix = camera.calc_matrix_camera(
                 depsgraph,
                 x = resolution_x,
                 y = resolution_y,
@@ -64,7 +64,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
                 scale_y = 1,
             )     
 
-            return modelview_matrix, projection_matrix      
+            return modelview_matrix, window_matrix      
 
 
         # Lazily import GPU module, since GPU context is only created on demand
@@ -101,20 +101,13 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
                 self.mesh.rebuild_batch_buffers(shader)
 
                 camera = bpy.data.objects['Camera']
-                mv, mvp = get_camera_matrices(camera, depsgraph, WIDTH, HEIGHT)
-
-                mvp = Matrix(
-                            ((-0.9818, -0.9824, -0.0000,  0.8235),
-                            ( 0.8094, -0.8089,  2.0971, -7.4600),
-                            ( 0.6209, -0.6205, -0.4790, 13.3581),
-                            ( 0.6209, -0.6205, -0.4790, 13.3778))
-                            )
+                mv, mw = get_camera_matrices(camera, depsgraph, WIDTH, HEIGHT)
+                mvp = mw @ mv
 
                 shader.set_mat4('ModelViewProjectionMatrix', mvp.transposed())
                 shader.set_mat4('ModelMatrix', self.mesh.matrix_world.transposed())
 
                 camera_loc = camera.location
-                camera_loc = Vector((-6.8294, 7.6634, 9.1488))
 
                 shader.set_vec3('viewPos',  camera_loc)
                 shader.set_vec3('lightPos', self.light.location)
@@ -128,10 +121,10 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         offscreen.free()
 
-        if IMAGE_NAME not in bpy.data.images:
-            bpy.data.images.new(IMAGE_NAME, WIDTH, HEIGHT)
-        image = bpy.data.images[IMAGE_NAME]
-        image.scale(WIDTH, HEIGHT)
+        # if IMAGE_NAME not in bpy.data.images:
+        #     bpy.data.images.new(IMAGE_NAME, WIDTH, HEIGHT)
+        # image = bpy.data.images[IMAGE_NAME]
+        # image.scale(WIDTH, HEIGHT)
 
         buffer_list = []
 
@@ -143,8 +136,14 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         GAMMA = 1.0 / 2.4
         linearrgb_to_srgb = lambda c: (c * 12.92 if c > 0.0 else 0.0) if c < 0.0031306684425 else 1.055 * c**GAMMA - 0.055
-        
-        image.pixels = [linearrgb_to_srgb(v) for v in buffer_list]
+
+        # when rendering to a separate image texture you DO have to do this. but NOT when rendering directly into a pass        
+        # image.pixels = [linearrgb_to_srgb(v) for v in buffer_list]
+
+        result = self.begin_result(0, 0, WIDTH, HEIGHT)
+        layer = result.layers[0].passes["Combined"]
+        layer.rect = np.reshape(buffer_list, (-1, 4))
+        self.end_result(result)
 
 
 
