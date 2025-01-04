@@ -23,6 +23,10 @@ float specular_light(vec3 positionWS, vec3 normalWS, vec3 lightPosition, vec3 ey
 
 void main()
 {
+    vec3 lightPos = LightBlock[0].lightPos_Energy.xyz;
+    float lightEnergy = LightBlock[0].lightPos_Energy.w;
+    vec3 lightColor = LightBlock[0].lightColor.xyz;
+
     float ambient_strength = .7;
     vec3 ambient = ambientColor * ambient_strength;
 

@@ -11,7 +11,7 @@ class MeshTriangleShader(BaseShader):
     def __init__(self):
         super().__init__()
 
-        self.vs_src, self.fs_src = self.get_shader_source()
+        self.vs_src, self.fs_src, self.typedef_src = self.get_shader_source()
 
     def get_shader_source(self):
         addon_path = get_path()
@@ -22,6 +22,7 @@ class MeshTriangleShader(BaseShader):
         template_src_files = (
         "meshtriangle.vs.glsl",
         "meshtriangle.fs.glsl",
+        "typedef.glsl"
         )
 
         sources = []
@@ -31,13 +32,16 @@ class MeshTriangleShader(BaseShader):
             with open(src_file) as f:
                 sources.append(f.read())
 
-        return sources[0], sources[1]
+        return sources[0], sources[1], sources[2]
 
     def compile_program(self):
         shader_info = gpu.types.GPUShaderCreateInfo()
 
+        shader_info.typedef_source(self.typedef_src)
+
         shader_info.vertex_source(self.vs_src)
         shader_info.fragment_source(self.fs_src)
+        
 
         shader_info.push_constant('VEC3', "viewPos")
 
@@ -47,9 +51,7 @@ class MeshTriangleShader(BaseShader):
         shader_info.push_constant('VEC3', "surfaceColor")
         shader_info.push_constant('FLOAT', "surfaceRoughness")
 
-        shader_info.push_constant('VEC3', "lightPos")
-        shader_info.push_constant('FLOAT', "lightEnergy")
-        shader_info.push_constant('VEC3', "lightColor")
+        shader_info.uniform_buf(0, "LightData", "LightBlock[]") 
 
         shader_info.push_constant('VEC3', "ambientColor")
         

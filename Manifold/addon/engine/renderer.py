@@ -200,9 +200,16 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         shader.set_vec3('viewPos', camera_location)
 
-        shader.set_vec3('lightPos', self.light.location)
-        shader.set_float('lightEnergy', self.light.data.energy/10)
-        shader.set_float('lightColor', self.light.data.color)
+        lights_data = []
+        lights_data += self.light.location[:]
+        lights_data.append(self.light.data.energy/10)
+        lights_data += self.light.data.color[:]
+        lights_data += [0.0]
+
+        lights_uniform_data = gpu.types.Buffer('FLOAT', 8, lights_data)
+        lights_uniform_buf = gpu.types.GPUUniformBuf(lights_uniform_data)
+
+        shader.set_uniform_buffer("LightBlock", lights_uniform_buf)
 
         background_color = self.get_background_color(scene)
         shader.set_vec3('ambientColor', background_color[:3])
