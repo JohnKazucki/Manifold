@@ -1,5 +1,8 @@
 # Manifold
- rendering engine for Blender 4.3
+ Rendering engine for Blender 4.3 Purely a testing project.
+ Gets sluggish when editing meshes with ~50k triangles or more.
+
+ ![image](https://github.com/user-attachments/assets/28011a1d-c4d0-4a4e-980e-f0b6f9f59823)
 
 
 ## Current Features
