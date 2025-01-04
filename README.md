@@ -19,6 +19,6 @@
 * Basic transparency (maybe)
 
 ## Special Thanks
-* McManning for his Scratchpad rendering engine (written in Blender bgl API)
-  it served as a guide for this gpu API version
+* McManning for his Scratchpad rendering engine (written in Blender bgl API)<br/> 
+  it served as a guide for this gpu API version<br/> 
   https://github.com/McManning/Scratchpad
