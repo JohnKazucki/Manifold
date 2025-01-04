@@ -23,15 +23,15 @@ float specular_light(vec3 positionWS, vec3 normalWS, vec3 lightPosition, vec3 ey
 
 void main()
 {
-    vec3 lightPos = LightBlock[0].lightPos_Energy.xyz;
-    float lightEnergy = LightBlock[0].lightPos_Energy.w;
-    vec3 lightColor = LightBlock[0].lightColor.xyz;
-
     float ambient_strength = .7;
     vec3 ambient = ambientColor * ambient_strength;
 
-    float diff = diffuse_light(positionWS, normalWS, lightPos);
-    vec3 diffuse = diff*lightColor*lightEnergy;
+    vec3 lightPos;
+    float lightEnergy;
+    vec3 lightColor;
+
+    vec3 diffuse = vec3(0.0, 0.0, 0.0);
+    vec3 specular = vec3(0.0, 0.0, 0.0);
 
     float specCurve = 10;
     float specularity = 1.0-surfaceRoughness;
@@ -39,9 +39,19 @@ void main()
     float specExponent = (exp(specCurve*specularity)-1.0)/(exp(specCurve)-1.0)*512;
     specExponent += 0.0001;
 
-    float spec = specular_light(positionWS, normalWS, lightPos, viewPos, specExponent);
-    float specularStrength = lightEnergy*(specExponent/128);
-    vec3 specular = specularStrength*spec * lightColor;
+    for(int i=0; i<LightBlock.length(); i++)
+    {
+        lightPos = LightBlock[i].lightPos_Energy.xyz;
+        lightEnergy = LightBlock[i].lightPos_Energy.w;
+        lightColor = LightBlock[i].lightColor.xyz;   
+
+        float diff = diffuse_light(positionWS, normalWS, lightPos);     
+        diffuse += diff*lightEnergy*lightColor;
+
+        float spec = specular_light(positionWS, normalWS, lightPos, viewPos, specExponent);
+        float specularStrength = lightEnergy*(specExponent/128);
+        specular += specularStrength*spec*lightColor;
+    }
     
     vec3 color = (ambient+diffuse+specular)*surfaceColor;
     FragColor = vec4(color, 1.0);

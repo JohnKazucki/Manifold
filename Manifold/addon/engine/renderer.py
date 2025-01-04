@@ -21,9 +21,9 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
     def __init__(self):
 
         self.meshes = dict()
+        self.lights = dict()
 
         self.meshtriangle_shader = MeshTriangleShader()
-        self.light = None
 
     def __del__(self):
         pass
@@ -33,6 +33,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         scene = depsgraph.scene
 
         updated_meshes = dict()
+        updated_lights = dict()
         meshes_to_rebuild = []
 
         # Check for any updated mesh geometry to rebuild GPU buffers
@@ -51,9 +52,10 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
                 if obj.display_type in ('SOLID', 'TEXTURED'):
                     self.update_mesh(obj, depsgraph, updated_meshes, meshes_to_rebuild)        
             elif obj.type == 'LIGHT':
-                self.update_light(obj)
+                self.update_light(obj, updated_lights)
 
         self.meshes = updated_meshes
+        self.lights = updated_lights
 
 
     def update_mesh(self, obj, depsgraph, updated_meshes, meshes_to_rebuild):
@@ -78,8 +80,8 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         updated_meshes[obj.name] = mesh
 
 
-    def update_light(self, obj):
-        self.light = obj
+    def update_light(self, obj, updated_lights):    
+        updated_lights[obj.name] = obj
 
 
     def render(self, depsgraph):
@@ -198,18 +200,22 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         shader = self.meshtriangle_shader
         shader.bind()
 
-        shader.set_vec3('viewPos', camera_location)
-
         lights_data = []
-        lights_data += self.light.location[:]
-        lights_data.append(self.light.data.energy/10)
-        lights_data += self.light.data.color[:]
-        lights_data += [0.0]
 
-        lights_uniform_data = gpu.types.Buffer('FLOAT', 8, lights_data)
+        for light in self.lights.values():
+            lights_data += light.location[:]
+            lights_data.append(light.data.energy/10)
+            lights_data += light.data.color[:]
+            lights_data += [0.0]
+
+        lights_data += [0.0]*8*(100-len(self.lights))
+
+        lights_uniform_data = gpu.types.Buffer('FLOAT', 8*100, lights_data)
         lights_uniform_buf = gpu.types.GPUUniformBuf(lights_uniform_data)
 
         shader.set_uniform_buffer("LightBlock", lights_uniform_buf)
+
+        shader.set_vec3('viewPos', camera_location)
 
         background_color = self.get_background_color(scene)
         shader.set_vec3('ambientColor', background_color[:3])
