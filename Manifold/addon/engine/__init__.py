@@ -11,7 +11,8 @@ classes = (
 def get_panels():
 
     from bl_ui import(
-        properties_data_light
+        properties_data_light,
+        properties_material
     )
 
     exclude_panels = {
@@ -32,6 +33,7 @@ def get_panels():
 
     include_panels = {
         properties_data_light.DATA_PT_EEVEE_light, #piggybacking off of Eevee TODO : don't, write bespoke panel to draw light data
+        properties_material.EEVEE_MATERIAL_PT_context_material
     }
 
     panels = []
