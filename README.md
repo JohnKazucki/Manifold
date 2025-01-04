@@ -4,8 +4,11 @@
 
  ![image](https://github.com/user-attachments/assets/28011a1d-c4d0-4a4e-980e-f0b6f9f59823)
 
+## Requirements
+* Blender 4.3 (may work on any version since 4.0)
+* Windows/Linux (MacOS might work as well, let me know!)
 
-## Current Features
+## Features
 * Non PBR rendering
 * Multiple Meshes
 * One Material per Mesh
