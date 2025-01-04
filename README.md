@@ -10,6 +10,7 @@
 
 ## Features
 * Non PBR rendering
+* F12 rendering (stills and animations)
 * Multiple Meshes
 * One Material per Mesh
 * Per Material color and roughness
