@@ -106,7 +106,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         self.size_y = int(scene.render.resolution_y * scale)
 
         camera = scene.camera
-        view_m, window_m = get_camera_matrices(camera, depsgraph, self.size_x, self.size_y)
+        view_matrix, window_matrix = get_camera_matrices(camera, depsgraph, self.size_x, self.size_y)
 
         # Lazily import GPU module, since GPU context is only created on demand
         # for rendering and does not exist on register.
@@ -126,7 +126,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
                 gpu.matrix.load_matrix(Matrix.Identity(4))
                 gpu.matrix.load_projection_matrix(Matrix.Identity(4))
 
-                self.draw_meshes(scene, view_m, window_m, camera.location, is_viewport=False)
+                self.draw_meshes(scene, view_matrix, window_matrix, camera.location, is_viewport=False)
 
             buffer = fb.read_color(0,0, self.size_x, self.size_y, 4, 0, 'FLOAT')
 
@@ -166,13 +166,13 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         region = context.region
         region3d = context.region_data
 
-        view_m = region3d.view_matrix
-        window_m = region3d.window_matrix
+        view_matrix = region3d.view_matrix
+        window_matrix = region3d.window_matrix
         camera_location = region3d.view_matrix.inverted().translation
 
         fb = gpu.state.active_framebuffer_get()
         self.draw_background(fb, scene)
-        self.draw_meshes(scene, view_m, window_m, camera_location, is_viewport=True)
+        self.draw_meshes(scene, view_matrix, window_matrix, camera_location, is_viewport=True)
 
 
     def get_background_color(self, scene):
@@ -188,7 +188,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         fb.clear(color=background_color, depth=1.0)
 
 
-    def draw_meshes(self, scene, view_m, window_m, camera_location, is_viewport=False):
+    def draw_meshes(self, scene, view_matrix, window_matrix, camera_location, is_viewport=False):
         import gpu
 
         gpu.state.depth_test_set('LESS_EQUAL')
@@ -222,7 +222,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         for mesh in self.meshes.values():
 
-            modelviewprojection_matrix = window_m @ view_m @ mesh.matrix_world
+            modelviewprojection_matrix = window_matrix @ view_matrix @ mesh.matrix_world
             shader.set_mat4('ModelViewProjectionMatrix', modelviewprojection_matrix.transposed())
 
             mesh.rebuild_batch_buffers(shader)
