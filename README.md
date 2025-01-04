@@ -17,3 +17,8 @@
 * Cast shadows
 * PBR (maybe)
 * Basic transparency (maybe)
+
+## Special Thanks
+* McManning for his Scratchpad rendering engine (written in Blender bgl API)
+  it served as a guide for this gpu API version
+  https://github.com/McManning/Scratchpad
