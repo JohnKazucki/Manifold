@@ -19,16 +19,9 @@ class Mesh:
         self.is_dirty = False
         self.indices_size = 0
 
-        self.material = BaseMaterial("Fallback", [0.8, 0.8, 0.8], 0.5)
-
 
     def update(self, obj):
         self.matrix_world = obj.matrix_world
-
-        mat_slots = obj.material_slots
-        if len(mat_slots) > 0:
-            mat = mat_slots[0].material
-            self.material = BaseMaterial(mat.name, mat.diffuse_color[:3], mat.roughness)
 
     def rebuild(self, eval_obj):
         mesh = eval_obj.to_mesh()
