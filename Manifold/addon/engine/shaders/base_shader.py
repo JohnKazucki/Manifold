@@ -26,6 +26,9 @@ class BaseShader:
         matrix_list = np.reshape(matrix, (16, ))
         self.program.uniform_float(name, matrix_list)
 
+    def set_int(self, name, value):
+        self.program.uniform_int(name, value)
+
     def set_uniform_buffer(self, name, ubo):
         self.program.uniform_block(name, ubo)
 

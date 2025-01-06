@@ -214,6 +214,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         lights_uniform_buf = gpu.types.GPUUniformBuf(lights_uniform_data)
 
         shader.set_uniform_buffer("LightBlock", lights_uniform_buf)
+        shader.set_int("NumLights", len(self.lights))
 
         shader.set_vec3('viewPos', camera_location)
 

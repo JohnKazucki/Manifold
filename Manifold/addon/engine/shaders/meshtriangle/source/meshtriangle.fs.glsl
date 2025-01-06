@@ -39,7 +39,7 @@ void main()
     float specExponent = (exp(specCurve*specularity)-1.0)/(exp(specCurve)-1.0)*512;
     specExponent += 0.0001;
 
-    for(int i=0; i<LightBlock.length(); i++)
+    for(int i=0; i<NumLights; i++)
     {
         lightPos = LightBlock[i].lightPos_Energy.xyz;
         lightEnergy = LightBlock[i].lightPos_Energy.w;

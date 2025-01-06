@@ -51,7 +51,10 @@ class MeshTriangleShader(BaseShader):
         shader_info.push_constant('VEC3', "surfaceColor")
         shader_info.push_constant('FLOAT', "surfaceRoughness")
 
-        shader_info.uniform_buf(0, "LightData", "LightBlock[100]") 
+        light_block_string = "LightBlock" + "[" + str(100) + "]"
+        shader_info.uniform_buf(0, "LightData", light_block_string)
+
+        shader_info.push_constant('INT', "NumLights")
 
         shader_info.push_constant('VEC3', "ambientColor")
         
