@@ -14,10 +14,17 @@ float diffuse_light(vec3 positionWS, vec3 normalWS, vec3 lightPosition)
 
 float specular_light(vec3 positionWS, vec3 normalWS, vec3 lightPosition, vec3 eyePosition, float shinyness)
 {
-    vec3 toLight = normalize(lightPosition-positionWS);
+    vec3 toLight = lightPosition-positionWS;
+    float dist = length(toLight);
+    toLight = normalize(toLight);
+
     vec3 toEye = normalize(eyePosition-positionWS);
     vec3 reflectedLightDir = normalize(reflect(-toLight, normalWS));
     float spec = pow(max(dot(toEye, reflectedLightDir), 0.0), shinyness);
+
+    float falloff_strength = (512/(512-shinyness));
+    spec *= 1/(dist/falloff_strength);
+
     return spec;
 }
 
