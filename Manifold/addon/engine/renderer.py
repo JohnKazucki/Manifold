@@ -229,8 +229,8 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
             mesh.rebuild_batch_buffers(shader)
 
             shader.set_mat4('ModelMatrix', mesh.matrix_world.transposed())
-            shader.set_vec3('surfaceColor', mesh.material.diffuse_color[:3])
-            shader.set_float('surfaceRoughness', mesh.material.roughness)
+            shader.set_vec3('surfaceColor', mesh.material.surface_color)
+            shader.set_float('surfaceRoughness', mesh.material.surface_roughness)
 
             mesh.draw(shader)
         
