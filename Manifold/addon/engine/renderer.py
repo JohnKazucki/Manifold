@@ -193,7 +193,10 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         for mesh in self.meshes.values():
 
+            print("start of rendering debug =========================================")
+
             modelviewprojection_matrix = window_matrix @ view_matrix @ mesh.matrix_world
+            print(f"MVP:  \n{modelviewprojection_matrix}")
             shader.set_mat4('ModelViewProjectionMatrix', modelviewprojection_matrix.transposed())
 
             mesh.rebuild_batch_buffers(shader)
@@ -201,6 +204,8 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
             shader.set_mat4('ModelMatrix', mesh.matrix_world.transposed())
 
             mesh.draw(shader)
+
+            print("end of rendering debug =========================================")
         
         gpu.state.depth_mask_set(False)
         shader.unbind()
