@@ -45,10 +45,6 @@ class Mesh:
         
     def rebuild_batch_buffers(self, shader: BaseShader):
 
-        print(f"Position Buffer: \n{self.vertices}")
-        print(f"Normal Buffer: \n{self.normals}")
-        print(f"Index Buffer: \n{self.indices}")
-
         self.Batch = batch_for_shader(shader.program, 'TRIS', {"Position": self.vertices, "Normal": self.normals}, indices=self.indices)
 
     def draw(self, shader: BaseShader):
