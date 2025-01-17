@@ -224,7 +224,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         for mesh in self.meshes.values():
 
             modelviewprojection_matrix = window_matrix @ view_matrix @ mesh.matrix_world
-            shader.set_mat4('ModelViewProjectionMatrix', modelviewprojection_matrix.transposed())
+            shader.set_mat4('MVP', modelviewprojection_matrix.transposed())
 
             mesh.rebuild_batch_buffers(shader)
 
