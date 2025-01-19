@@ -224,11 +224,11 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         for mesh in self.meshes.values():
 
             modelviewprojection_matrix = window_matrix @ view_matrix @ mesh.matrix_world
-            shader.set_mat4('MVP', modelviewprojection_matrix.transposed())
+            shader.set_mat4('MVP', modelviewprojection_matrix)
 
             mesh.rebuild_batch_buffers(shader)
 
-            shader.set_mat4('ModelMatrix', mesh.matrix_world.transposed())
+            shader.set_mat4('ModelMatrix', mesh.matrix_world)
             shader.set_vec3('surfaceColor', mesh.material.surface_color)
             shader.set_float('surfaceRoughness', mesh.material.surface_roughness)
 

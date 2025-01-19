@@ -23,8 +23,7 @@ class BaseShader:
         self.program.uniform_float(name, vector[:])
     
     def set_mat4(self, name, matrix):
-        matrix_list = np.reshape(matrix, (16, ))
-        self.program.uniform_float(name, matrix_list)
+        self.program.uniform_float(name, matrix)
 
     def set_int(self, name, value):
         self.program.uniform_int(name, value)
