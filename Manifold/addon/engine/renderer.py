@@ -2,7 +2,7 @@ import bpy
 from mathutils import Matrix
 
 from .mesh import Mesh
-from .shaders.meshtriangle.shader import MeshTriangleShader
+from .shaders.meshtriangle.shader import MeshTriangleShader, ModelData_Buffer
 
 import numpy as np
 
@@ -83,6 +83,23 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
     def update_light(self, obj, updated_lights):    
         updated_lights[obj.name] = obj
 
+    def lights_uniform_buf(self):
+        import gpu
+
+        lights_data = []
+
+        for light in self.lights.values():
+            lights_data += light.location[:]
+            lights_data.append(light.data.energy/10)
+            lights_data += light.data.color[:]
+            lights_data += [0.0]
+
+        lights_data += [0.0]*8*(100-len(self.lights))
+
+        lights_uniform_data = gpu.types.Buffer('FLOAT', 8*100, lights_data)
+        lights_uniform_buf = gpu.types.GPUUniformBuf(lights_uniform_data)
+
+        return lights_uniform_buf
 
     def render(self, depsgraph):
         # This is F12 render
@@ -200,19 +217,7 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
         shader = self.meshtriangle_shader
         shader.bind()
 
-        lights_data = []
-
-        for light in self.lights.values():
-            lights_data += light.location[:]
-            lights_data.append(light.data.energy/10)
-            lights_data += light.data.color[:]
-            lights_data += [0.0]
-
-        lights_data += [0.0]*8*(100-len(self.lights))
-
-        lights_uniform_data = gpu.types.Buffer('FLOAT', 8*100, lights_data)
-        lights_uniform_buf = gpu.types.GPUUniformBuf(lights_uniform_data)
-
+        lights_uniform_buf = self.lights_uniform_buf()
         shader.set_uniform_buffer("LightBlock", lights_uniform_buf)
         shader.set_int("NumLights", len(self.lights))
 
@@ -223,14 +228,13 @@ class ManifoldRenderEngine(bpy.types.RenderEngine):
 
         for mesh in self.meshes.values():
 
-            modelviewprojection_matrix = window_matrix @ view_matrix @ mesh.matrix_world
-            shader.set_mat4('MVP', modelviewprojection_matrix)
-
             mesh.rebuild_batch_buffers(shader)
 
-            shader.set_mat4('ModelMatrix', mesh.matrix_world)
-            shader.set_vec3('surfaceColor', mesh.material.surface_color)
-            shader.set_float('surfaceRoughness', mesh.material.surface_roughness)
+            modelviewprojection_matrix = window_matrix @ view_matrix @ mesh.matrix_world
+
+            model_uniform_buf = ModelData_Buffer(modelviewprojection_matrix.transposed(), mesh.matrix_world.transposed(), 
+                                               mesh.material.surface_color, mesh.material.surface_roughness)  
+            shader.set_uniform_buffer("ModelBlock", model_uniform_buf)  
 
             mesh.draw(shader)
         

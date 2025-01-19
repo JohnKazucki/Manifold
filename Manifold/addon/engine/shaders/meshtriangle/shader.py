@@ -6,6 +6,17 @@ import os.path
 from .....get_path import get_path
 
 
+def ModelData_Buffer(MVP, ModelMatrix, surface_color, surface_roughness):
+    MVP_list = MVP[0][:] + MVP[1][:] + MVP[2][:] + MVP[3][:]
+    ModelMatrix_list = ModelMatrix[0][:] + ModelMatrix[1][:] + ModelMatrix[2][:] + ModelMatrix[3][:]
+
+    model_data = MVP_list + ModelMatrix_list + surface_color + (surface_roughness,)
+
+    model_uniform_data = gpu.types.Buffer('FLOAT', 9*4, model_data)
+    model_uniform_buf = gpu.types.GPUUniformBuf(model_uniform_data) 
+
+    return model_uniform_buf
+
 
 class MeshTriangleShader(BaseShader):
     def __init__(self):
@@ -45,14 +56,10 @@ class MeshTriangleShader(BaseShader):
 
         shader_info.push_constant('VEC3', "viewPos")
 
-        shader_info.push_constant('MAT4', "MVP")
-        shader_info.push_constant('MAT4', "ModelMatrix")
-
-        shader_info.push_constant('VEC3', "surfaceColor")
-        shader_info.push_constant('FLOAT', "surfaceRoughness")
-
         light_block_string = "LightBlock" + "[" + str(100) + "]"
         shader_info.uniform_buf(0, "LightData", light_block_string)
+
+        shader_info.uniform_buf(1, "ModelData", "ModelBlock")
 
         shader_info.push_constant('INT', "NumLights")
 

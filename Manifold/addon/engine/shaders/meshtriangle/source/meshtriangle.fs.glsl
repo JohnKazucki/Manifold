@@ -37,6 +37,9 @@ void main()
     float lightEnergy;
     vec3 lightColor;
 
+    vec3 surfaceColor = ModelBlock.surface_color_roughness.xyz;
+    float surfaceRoughness = ModelBlock.surface_color_roughness.w;
+
     vec3 diffuse = vec3(0.0, 0.0, 0.0);
     vec3 specular = vec3(0.0, 0.0, 0.0);
 
